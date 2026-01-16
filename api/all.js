@@ -47,12 +47,15 @@ export default async function handler(req, res) {
 
   const today = new Date();
   const dateStr = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
-  const year = today.getMonth() >= 9 ? today.getFullYear() + 1 : today.getFullYear();
+  
+  // NBA season year: if we're in Oct-Dec, use current year; if Jan-Jun, use previous year
+  const month = today.getMonth(); // 0-indexed
+  const seasonYear = month >= 9 ? today.getFullYear() : today.getFullYear() - 1;
   
   const endpoints = {
     schedule: `https://api.sportradar.com/nba/trial/v8/en/games/${dateStr}/schedule.json`,
-    season: `https://api.sportradar.com/nba/trial/v8/en/games/${year}/REG/schedule.json`,
-    standings: `https://api.sportradar.com/nba/trial/v8/en/seasons/${year}/REG/standings.json`,
+    season: `https://api.sportradar.com/nba/trial/v8/en/games/${seasonYear}/REG/schedule.json`,
+    standings: `https://api.sportradar.com/nba/trial/v8/en/seasons/${seasonYear}/REG/standings.json`,
     injuries: `https://api.sportradar.com/nba/trial/v8/en/league/injuries.json`
   };
 
@@ -72,7 +75,6 @@ export default async function handler(req, res) {
       errors[key] = error.message;
     }
     
-    // Wait 1.1 seconds between requests (rate limit)
     if (key !== 'injuries') {
       await sleep(1100);
     }
@@ -81,6 +83,7 @@ export default async function handler(req, res) {
   return res.status(200).json({ 
     data: results, 
     errors: Object.keys(errors).length > 0 ? errors : null,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    seasonYear: seasonYear
   });
 }
