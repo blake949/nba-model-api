@@ -56,4 +56,4 @@ export default async function handler(req, res) {
     timestamp: new Date().toISOString()
   });
 }
-
+```
